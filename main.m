@@ -3,24 +3,58 @@ clear all; clc; close all;
 %% system parameters
 N = 16; % antenna number
 d = 0.5; % normalized antenna distance
-K = 3; % target number
-sig_angle = [-30, 0, 20].'; % target angle
-sig_len = 1e4; % signal length
-Ps = ones(K, 1); % signal power
-sig = bsxfun(@times, sqrt(Ps.' / 2), randn(sig_len, K) + 1j * randn(sig_len, K)); % target signals
-SNR = 20; % dB
-Pn = sum(Ps) / K / db2pow(SNR);
-noise = sqrt(Pn / 2) * (randn(N, sig_len) + 1j * randn(N, sig_len));
-recv = get_steervec(N, d, deg2rad(sig_angle)) * sig.' + noise;
+K = 6; % target number
+sig_min_spacing = 100 / N; % deg, the minimal target spacing
+spatial_angle_min = -60; % deg, the detection angle
+spatial_angle_max = 60; % deg, the detection angle
 
-ang_range = [-70:0.01:70].';
-ang_mat = get_steervec(N, d, deg2rad(ang_range));
-sp_music = music(recv, K, ang_mat);
+% multiple trails to show the estimation performance
+trail_num = 1e2;
+RMSE = zeros(trail_num, 1);
+for idx_trail = 1:trail_num
+    % genearte the random ground-truth DOA
+    while (1) 
+        if sig_min_spacing * K >= (spatial_angle_max - spatial_angle_min) * 0.7
+            error('The targets are too close!');
+        end 
+        sig_angle = sort(rand(K, 1) * (spatial_angle_max - spatial_angle_min) + spatial_angle_min, 'ascend');
+        if K > 1
+            if (min(abs(sig_angle(2:end) - sig_angle(1: end - 1))) >= sig_min_spacing) 
+                break;
+            end 
+        else
+            break;
+        end 
+    end
+    % signal and noise power
+    SNR = 10; % dB
+    Ps = ones(K, 1); % signal power 
+    Pn = sum(Ps) / K / db2pow(SNR); 
 
-sp_music = pow2db(sp_music / max(sp_music));
-figure; plot(ang_range, sp_music);
-hold on;
-stem(sig_angle, pow2db(Ps / max(Ps)), '-o', 'BaseValue', -80);
-legend('MUSIC', 'Ground-truth angles')
-grid on;
+    sig_len = 1e3; % signal length
+    sig = bsxfun(@times, sqrt(Ps.' / 2), randn(sig_len, K) + 1j * randn(sig_len, K)); % target signals
+    noise = sqrt(Pn / 2) * (randn(N, sig_len) + 1j * randn(N, sig_len));
+    recv = get_steervec(N, d, deg2rad(sig_angle)) * sig.' + noise;
+
+    ang_range = [max([spatial_angle_min - 10, -90]):0.01:min([90, spatial_angle_max + 10])].';
+    ang_mat = get_steervec(N, d, deg2rad(ang_range));
+    sp_music = music(recv, K, ang_mat);
+    sp_music = sp_music / max(sp_music);
+    
+    % get the estimated angle from the spectrum
+    [est_ang, est_ang_index, RMSE_tmp] = get_estangle_from_spectrum(sp_music, ang_range, sig_angle, sig_min_spacing);
+    RMSE(idx_trail) = RMSE_tmp;
+    if idx_trail==1
+        % show the spectrum
+        sp_music = pow2db(sp_music);
+        figure; plot(ang_range, sp_music);
+        hold on;
+        stem(est_ang, sp_music(est_ang_index), 'x', 'LineStyle', 'none');
+        stem(sig_angle, pow2db(Ps / max(Ps)), '-o', 'BaseValue', -80);
+        legend('MUSIC spectrum', 'Estimated angles (MUSIC)', 'Ground-truth angles')
+        grid on;
+        drawnow;
+    end
+end
+fprintf('RMSE (MUSIC): %.4g deg\n', sqrt(sum(abs(RMSE).^2)/length(RMSE)));
 
