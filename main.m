@@ -10,7 +10,8 @@ spatial_angle_max = 60; % deg, the detection angle
 
 % multiple trails to show the estimation performance
 trail_num = 1e2;
-RMSE = zeros(trail_num, 1);
+RMSE_music = zeros(trail_num, 1);
+RMSE_capon = zeros(trail_num, 1);
 for idx_trail = 1:trail_num
     % genearte the random ground-truth DOA
     while (1) 
@@ -27,7 +28,7 @@ for idx_trail = 1:trail_num
         end 
     end
     % signal and noise power
-    SNR = 10; % dB
+    SNR = -10; % dB
     Ps = ones(K, 1); % signal power 
     Pn = sum(Ps) / K / db2pow(SNR); 
 
@@ -38,23 +39,37 @@ for idx_trail = 1:trail_num
 
     ang_range = [max([spatial_angle_min - 10, -90]):0.01:min([90, spatial_angle_max + 10])].';
     ang_mat = get_steervec(N, d, deg2rad(ang_range));
-    sp_music = music(recv, K, ang_mat);
-    sp_music = sp_music / max(sp_music);
     
+    % music algorithm
+    sp_music = music(recv, K, ang_mat);
+    sp_music = sp_music / max(sp_music); 
     % get the estimated angle from the spectrum
-    [est_ang, est_ang_index, RMSE_tmp] = get_estangle_from_spectrum(sp_music, ang_range, sig_angle, sig_min_spacing);
-    RMSE(idx_trail) = RMSE_tmp;
+    [est_ang_music, est_ang_index_music, RMSE_tmp] = get_estangle_from_spectrum(sp_music, ang_range, sig_angle, sig_min_spacing);
+    RMSE_music(idx_trail) = RMSE_tmp;
+
+    % capon algorithm
+    sp_capon = capon(recv, K, ang_mat);
+    sp_capon = sp_capon / max(sp_capon);
+    % get the estimated angle from the spectrum
+    [est_ang_capon, est_ang_index_capon, RMSE_tmp] = get_estangle_from_spectrum(sp_capon, ang_range, sig_angle, sig_min_spacing);
+    RMSE_capon(idx_trail) = RMSE_tmp;
+
     if idx_trail==1
         % show the spectrum
         sp_music = pow2db(sp_music);
+        sp_capon = pow2db(sp_capon);
         figure; plot(ang_range, sp_music);
         hold on;
-        stem(est_ang, sp_music(est_ang_index), 'x', 'LineStyle', 'none');
+        stem(est_ang_music, sp_music(est_ang_index_music), 'x', 'LineStyle', 'none');
         stem(sig_angle, pow2db(Ps / max(Ps)), '-o', 'BaseValue', -80);
-        legend('MUSIC spectrum', 'Estimated angles (MUSIC)', 'Ground-truth angles')
+        plot(ang_range, sp_capon); 
+        stem(est_ang_capon, sp_capon(est_ang_index_capon), 'x', 'LineStyle', 'none');
+
+        legend('MUSIC spectrum', 'Estimated angles (MUSIC)', 'Ground-truth angles',...
+             'Capon spectrum', 'Estimated angles (Capon)')
         grid on;
         drawnow;
     end
 end
-fprintf('RMSE (MUSIC): %.4g deg\n', sqrt(sum(abs(RMSE).^2)/length(RMSE)));
-
+fprintf('RMSE (MUSIC): %.4g deg\n', sqrt(sum(abs(RMSE_music).^2) / length(RMSE_music)));
+fprintf('RMSE (Capon): %.4g deg\n', sqrt(sum(abs(RMSE_capon).^2) / length(RMSE_capon)));
