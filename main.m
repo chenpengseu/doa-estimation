@@ -134,9 +134,3 @@ fprintf('RMSE (Capon): %.4g deg, Time: %.4g s\n', sqrt(sum(abs(RMSE_capon).^2) /
 fprintf('RMSE (SOMP): %.4g deg, Time: %.4g s\n', sqrt(sum(abs(RMSE_somp).^2) / length(RMSE_somp)), t_somp / trail_num);
 fprintf('*************************************\n');
 
-N = 16; % antenna number
-d = 0.5; % normalized antenna distance
-K = 6; % target number
-sig_min_spacing = 100 / N; % deg, the minimal target spacing
-spatial_angle_min = -60; % deg, the detection angle
-spatial_angle_max = 60; % deg, the detection angle
