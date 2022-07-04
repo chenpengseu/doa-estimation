@@ -1,3 +1,5 @@
+% This is the main function to test the estimation methods and show the DOA estimation performance.
+
 clear all; clc; close all;
 
 %% system parameters
