@@ -21,13 +21,15 @@ ang_range = [max([spatial_angle_min - 10, -90]):ang_grid:min([90, spatial_angle_
 ang_mat = get_steervec(N, d, deg2rad(ang_range));
 
 % multiple trails to show the estimation performance
-trail_num = 10;
+trail_num = 1e2;
 RMSE_music = zeros(trail_num, 1);
 RMSE_capon = zeros(trail_num, 1);
 RMSE_somp = zeros(trail_num, 1);
+RMSE_esprit = zeros(trail_num, 1);
 t_capon = 0;
 t_music = 0;
 t_somp = 0;
+t_esprit = 0;
 for idx_trail = 1:trail_num
     % genearte the random ground-truth DOA
     while (1) 
@@ -60,7 +62,6 @@ for idx_trail = 1:trail_num
     noise = sqrt(Pn / 2) * (randn(N, sig_len) + 1j * randn(N, sig_len));
     recv = get_steervec(N, d, deg2rad(sig_angle)) * sig.' + noise;
 
-    
     %% music algorithm
     tic;
     sp_music = music(recv, K, ang_mat);
@@ -88,8 +89,17 @@ for idx_trail = 1:trail_num
     [est_ang_somp, est_ang_index_somp, RMSE_tmp] = get_estangle_from_spectrum(sp_somp, dic_range, sig_angle, sig_min_spacing);
     RMSE_somp(idx_trail) = RMSE_tmp;
 
+    %% ESPRIT 
+    tic; 
+    est_doa = ESPRIT(recv, K, d);
+    t_esprit = t_esprit + toc; 
+    rmse = get_rmse(sig_angle, est_doa);
+    RMSE_esprit(idx_trail) = rmse;
+ 
+
+    %% plot
     if idx_trail==1
-        last_time = (t_somp+t_music+t_capon)*trail_num;
+        last_time = (t_somp+t_music+t_capon+t_esprit)*trail_num;
         cur_time = 0;
         fprintf('Waiting for %.2g s...\n', last_time);
     end
@@ -134,5 +144,6 @@ fprintf('Performance:\n');
 fprintf('RMSE (MUSIC): %.4g deg, Time: %.4g s\n', sqrt(sum(abs(RMSE_music).^2) / length(RMSE_music)), t_music/trail_num);
 fprintf('RMSE (Capon): %.4g deg, Time: %.4g s\n', sqrt(sum(abs(RMSE_capon).^2) / length(RMSE_capon)), t_capon / trail_num);
 fprintf('RMSE (SOMP): %.4g deg, Time: %.4g s\n', sqrt(sum(abs(RMSE_somp).^2) / length(RMSE_somp)), t_somp / trail_num);
+fprintf('RMSE (ESPRIT): %.4g deg, Time: %.4g s\n', sqrt(sum(abs(RMSE_esprit).^2) / length(RMSE_esprit)), t_esprit / trail_num);
 fprintf('*************************************\n');
 
