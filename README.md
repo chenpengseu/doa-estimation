@@ -4,3 +4,4 @@ The algorithms for the DOA estimation:
 - SOMP
 - Capon
 - ESPRIT
+- Root_MUSIC
