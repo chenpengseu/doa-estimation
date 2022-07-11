@@ -125,7 +125,7 @@ for idx_SNR = 1:length(SNR_range)
             sp_music = pow2db(sp_music);
             sp_capon = pow2db(sp_capon);
             sp_somp = pow2db(sp_somp);
-            figure; 
+            h=figure; 
             leg_str = {};
             stem(doa, pow2db(Ps / max(Ps)), '-o', 'BaseValue', -80, 'LineWidth', 1, 'MarkerSize', 8);
             leg_str{1} = 'Ground-truth angles';
@@ -143,6 +143,12 @@ for idx_SNR = 1:length(SNR_range)
             legend(leg_str);
             grid on;
             drawnow;
+            savefig(h, sprintf('./figures/spectrum(%.2gdB)', SNR));
+            print(h, sprintf('./figures/spectrum(%.2gdB)', SNR), '-dtiff', '-r1000');
+            print(h, sprintf('./figures/spectrum(%.2gdB)', SNR), '-dmeta');
+            print(h, sprintf('./figures/spectrum(%.2gdB)', SNR), '-deps');
+            print(h, sprintf('./figures/spectrum(%.2gdB)', SNR), '-dpdf');
+            
         end
 
     end
