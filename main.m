@@ -161,7 +161,7 @@ RMSE_SNR_capon = vec(sqrt(sum(abs(RMSE_capon).^2) / size(RMSE_capon, 1)));
 RMSE_SNR_somp = vec(sqrt(sum(abs(RMSE_somp).^2) / size(RMSE_somp, 1)));
 RMSE_SNR_esprit = vec(sqrt(sum(abs(RMSE_esprit).^2) / size(RMSE_esprit, 1)));
 RMSE_SNR_root_music = vec(sqrt(sum(abs(RMSE_root_music).^2) / size(RMSE_root_music, 1)));
-figure; 
+h=figure; 
 semilogy(SNR_range, RMSE_SNR_music, 'LineWidth', 2)
 hold on;
 semilogy(SNR_range, RMSE_SNR_capon, 'LineWidth', 2)
@@ -172,3 +172,8 @@ legend('MUSIC', 'Capon', 'SOMP', 'ESPRIT', 'Root\_MUSIC');
 grid on;
 set(get(gca, 'XLabel'), 'String', 'SNR(dB)');
 set(get(gca, 'YLabel'), 'String', 'RMSE (deg)');
+savefig(h, './figures/SNR-RMSE');
+print(h, './figures/SNR-RMSE', '-dtiff', '-r1000');
+print(h, './figures/SNR-RMSE', '-dmeta');
+print(h, './figures/SNR-RMSE', '-deps');
+print(h, './figures/SNR-RMSE', '-dpdf');
