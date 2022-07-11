@@ -26,9 +26,13 @@ function [est_ang, est_ang_index, RMSE] = get_doa_from_spectrum(sp, doa_range, d
         end
 
     end
-
-    [~, min_idx] = min(abs(vec(doa) - vecH(valid_pks)).');
-    est_ang = vec(valid_pks(min_idx));
-    est_ang_index = vec(valid_pkx_idx(min_idx));
+    if length(valid_pks)>1
+        [~, min_idx] = min(abs(vec(doa) - vecH(valid_pks)).');
+        est_ang = vec(valid_pks(min_idx));
+        est_ang_index = vec(valid_pkx_idx(min_idx));
+    else
+        est_ang = valid_pks*ones(length(doa), 1);
+        est_ang_index = valid_pkx_idx*ones(length(doa), 1);
+    end
     RMSE = sqrt(sum(abs(est_ang - doa).^2) / length(doa));
 end
