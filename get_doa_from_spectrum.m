@@ -9,18 +9,15 @@ function [est_ang, est_ang_index, RMSE] = get_doa_from_spectrum(sp, doa_range, d
     if length(ang_pks) > 0
         valid_pks = [];
         valid_pkx_idx = [];
-        for idx = 1:length(ang_pks)
-
+        for idx = 1:length(ang_pks) 
             if idx == 1
                 valid_pks(1) = ang_pks(idx);
                 valid_pkx_idx(1) = locs(idx);
-            else
-
+            else 
                 if min(abs(ang_pks(idx) -valid_pks)) > doa_min_spacing
                     valid_pks(end + 1) = ang_pks(idx);
                     valid_pkx_idx(end + 1) = locs(idx);
-                end
-
+                end 
             end
 
         end
